@@ -1,3 +1,4 @@
+const WHATSAPP_NUMBER = '5521984532363';
 const preloader = document.querySelector('#preloader');
 const seenIntro = sessionStorage.getItem('lino-intro-seen');
 
@@ -77,6 +78,12 @@ const shareQuiz = document.querySelector('.share-whatsapp');
 const answers = {};
 const answerKeys = ['serviço', 'tipo de imóvel', 'região', 'prazo'];
 
+function trackFunnel(eventName, details = {}) {
+  const detail = { event: eventName, ...details };
+  window.dataLayer?.push(detail);
+  window.dispatchEvent(new CustomEvent('lino:funnel', { detail }));
+}
+
 function showQuizStep(step) {
   quiz.querySelectorAll('.quiz-step').forEach((panel) => panel.classList.toggle('active', Number(panel.dataset.step) === step));
   if (step <= 4) {
@@ -92,7 +99,8 @@ function finishQuiz() {
   const summary = `Serviço: ${answers['serviço']}. Imóvel/local: ${answers['tipo de imóvel']}. Região: ${answers['região']}. Prazo: ${answers['prazo']}.`;
   quizSummary.textContent = summary;
   const message = `Olá, Eng. Raphael Lino! Gostaria de conversar sobre uma necessidade.\n\n${summary}\n\nAguardo sua orientação.`;
-  shareQuiz.href = `https://wa.me/?text=${encodeURIComponent(message)}`;
+  shareQuiz.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  trackFunnel('diagnostico_concluido', { servico: answers['serviço'] });
   showQuizStep(5);
 }
 
@@ -100,14 +108,67 @@ quiz.querySelectorAll('.quiz-option, .choice').forEach((button) => {
   button.addEventListener('click', () => {
     const currentStep = Number(button.closest('.quiz-step').dataset.step);
     answers[answerKeys[currentStep - 1]] = button.dataset.value;
+    trackFunnel('diagnostico_resposta', { passo: currentStep, resposta: button.dataset.value });
     if (currentStep === 4) finishQuiz();
     else showQuizStep(currentStep + 1);
+  });
+});
+
+document.querySelectorAll('.quiz-back').forEach((button) => {
+  button.addEventListener('click', () => {
+    const targetStep = Number(button.dataset.backStep);
+    answerKeys.slice(targetStep).forEach((key) => delete answers[key]);
+    showQuizStep(targetStep);
   });
 });
 
 document.querySelector('.restart-quiz').addEventListener('click', () => {
   Object.keys(answers).forEach((key) => delete answers[key]);
   showQuizStep(1);
+});
+
+document.querySelectorAll('[data-track]').forEach((element) => {
+  element.addEventListener('click', () => trackFunnel(element.dataset.track));
+});
+
+const carouselControllers = [];
+document.querySelectorAll('[data-carousel]').forEach((carousel) => {
+  const track = carousel.querySelector('[data-carousel-track]');
+  const previous = carousel.querySelector('[data-carousel-prev]');
+  const next = carousel.querySelector('[data-carousel-next]');
+  const status = carousel.querySelector('.carousel-status');
+  if (!track || !previous || !next || !status) return;
+
+  const visibleItems = () => [...track.children].filter((item) => !item.hidden);
+  const getStride = () => {
+    const items = visibleItems();
+    if (!items.length) return 1;
+    const styles = getComputedStyle(track);
+    return items[0].getBoundingClientRect().width + (parseFloat(styles.columnGap || styles.gap) || 0);
+  };
+  const update = () => {
+    const items = visibleItems();
+    const total = items.length;
+    const current = Math.min(total, Math.max(1, Math.round(track.scrollLeft / getStride()) + 1));
+    status.textContent = `${String(current).padStart(2, '0')} / ${String(total).padStart(2, '0')}`;
+    previous.disabled = current <= 1;
+    next.disabled = current >= total || track.scrollWidth <= track.clientWidth + 2;
+  };
+  const move = (direction) => track.scrollBy({ left: direction * getStride(), behavior: reducedMotion ? 'auto' : 'smooth' });
+  previous.addEventListener('click', () => move(-1));
+  next.addEventListener('click', () => move(1));
+  let carouselTicking = false;
+  track.addEventListener('scroll', () => {
+    if (carouselTicking) return;
+    carouselTicking = true;
+    requestAnimationFrame(() => {
+      update();
+      carouselTicking = false;
+    });
+  }, { passive: true });
+  new ResizeObserver(update).observe(track);
+  carouselControllers.push({ carousel, track, update });
+  update();
 });
 
 const filterButtons = [...document.querySelectorAll('.filter-button')];
@@ -118,7 +179,9 @@ filterButtons.forEach((button) => {
     projectCards.forEach((card) => {
       card.hidden = button.dataset.filter !== 'all' && card.dataset.category !== button.dataset.filter;
     });
-    document.querySelector('.project-grid').scrollTo({ left: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
+    const projectTrack = document.querySelector('.project-grid');
+    projectTrack.scrollTo({ left: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
+    requestAnimationFrame(() => carouselControllers.find(({ carousel }) => carousel.dataset.carouselLabel === 'Registros de obra')?.update());
   });
 });
 
