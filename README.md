@@ -8,24 +8,25 @@ Abra o arquivo `index.html` em um navegador moderno ou publique toda esta pasta 
 
 ## Contato pelo WhatsApp
 
-Os formulários montam uma mensagem pronta e abrem o compartilhamento do WhatsApp. Como nenhum número foi fornecido, a página não fixa um destinatário. Para enviar diretamente ao número da empresa, substitua `https://wa.me/?text=` por `https://wa.me/55DDDNUMERO?text=` no arquivo `script.js`.
+O diagnóstico monta uma mensagem pronta e abre o compartilhamento do WhatsApp. Como nenhum número foi fornecido, a página não fixa um destinatário. Para enviar diretamente ao número da empresa, substitua `https://wa.me/?text=` por `https://wa.me/55DDDNUMERO?text=` no arquivo `script.js`.
 
 ## Conteúdo
 
 - identidade visual escura, com branco e laranja;
-- preloader de marca e indicador de progresso de leitura;
-- animações responsivas de entrada, transições de seção e microinterações;
-- retrato de hero criado a partir da referência real do engenheiro;
+- preloader curto, exibido apenas na primeira visita da sessão;
+- animações leves de entrada, sem parallax ou efeitos contínuos;
+- retrato otimizado do engenheiro no hero;
 - diagnóstico rápido em quatro etapas;
 - serviços;
 - galeria filtrável com fotografias e legendas técnicas;
 - apresentação do responsável técnico;
 - processo de atendimento;
 - registro em vídeo;
-- formulário para WhatsApp;
 - perguntas frequentes;
 - navegação responsiva e visualização ampliada das imagens.
 
 ## Validação
 
-A página foi verificada em 1440, 1024, 768, 430, 390 e 360 px. O fluxo cobre carregamento do preloader, menu mobile, diagnóstico, filtros, expansão da galeria, ativos visuais e ausência de rolagem horizontal.
+A página foi verificada em 1440, 1024, 768, 430, 390 e 360 px. O fluxo cobre preloader, menu mobile, diagnóstico, filtros, galeria, ativos visuais e ausência de rolagem horizontal acidental.
+
+No perfil mobile do Lighthouse, a versão revisada atingiu 93 em desempenho e 100 em acessibilidade, boas práticas e SEO.
